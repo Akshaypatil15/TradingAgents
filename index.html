@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantech Demo // Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg: #09090b;
+        --surface: #18181b;
+        --surface-highlight: #27272a;
+        --border: #3f3f46;
+        --primary: #00e599;
+        --accent: #3b82f6;
+        --text: #e4e4e7;
+        --text-dim: #a1a1aa;
+        --font-main: 'Inter', sans-serif;
+        --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+    body { background-color: var(--bg); color: var(--text); font-family: var(--font-main); height: 100vh; overflow: hidden; display: flex; }
+    
+    /* SIDEBAR */
+    .sidebar { width: 420px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; z-index: 10; gap: 20px; }
+    .brand { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .brand span { color: var(--text); }
+    .form-group { margin-bottom: 0; }
+    .form-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-bottom: 8px; }
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    
+    input[type="text"], input[type="date"], input[type="number"], select { 
+    width: 100%; 
+    background: var(--bg); 
+    border: 1px solid var(--border); 
+    color: var(--text); 
+    padding: 10px 12px; 
+    border-radius: 6px; 
+    font-family: var(--font-mono); 
+    font-size: 12px; 
+    transition: border-color 0.2s; 
+    cursor: pointer; 
+}
+    input:focus, select:focus { border-color: var(--primary); }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+
+    /* CHECKBOXES */
+    .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .checkbox-card { background: var(--bg); border: 1px solid var(--border); padding: 8px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; font-size: 12px; }
+    .checkbox-card:hover { border-color: var(--text-dim); }
+    .checkbox-card.selected { background: rgba(0, 229, 153, 0.1); border-color: var(--primary); color: var(--primary); }
+    .checkbox-card input { display: none; }
+
+    /* RADIO GROUP */
+    .radio-group { display: flex; gap: 4px; background: var(--bg); padding: 4px; border-radius: 6px; border: 1px solid var(--border); }
+    .radio-option { flex: 1; text-align: center; padding: 8px; font-size: 11px; cursor: pointer; border-radius: 4px; color: var(--text-dim); transition: all 0.2s; }
+    .radio-option.active { background: var(--surface-highlight); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+    /* AGENT GRID */
+    .agent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; margin-bottom: 10px; }
+    .agent-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s; opacity: 0.5; position: relative; cursor: pointer; }
+    .agent-card:hover { opacity: 0.8; border-color: var(--text-dim); }
+    
+    /* Selected State (Blue) - For All Agents */
+    .agent-card.selected-agent { opacity: 1; background: rgba(59, 130, 246, 0.15); border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    
+    /* All agent cards are clickable */
+    .agent-card { cursor: pointer; }
+    
+    /* Only Analysts are clickable */
+    .agent-card.clickable { cursor: pointer; }
+    
+    /* Active/Running State (Green Border) */
+    .agent-card.running { opacity: 1; border-color: var(--primary); box-shadow: 0 0 8px rgba(0, 229, 153, 0.2); }
+
+    /* Completed State (Green Background) */
+    .agent-card.completed { opacity: 1; border-color: var(--primary); background: rgba(0, 229, 153, 0.05); }
+    .advanced-section { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .advanced-title { padding: 10px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; color: var(--accent); cursor: pointer; display: flex; justify-content: space-between; background: var(--surface-highlight); }
+    .advanced-content { padding: 12px; display: none; flex-direction: column; gap: 12px; }
+    .advanced-content.open { display: flex; }
+    
+    .agent-role { font-size: 9px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.05em; }
+    .agent-name { font-size: 12px; font-weight: 600; }
+    .agent-status { font-family: var(--font-mono); font-size: 9px; margin-top: 4px; display: flex; align-items: center; gap: 6px; color: var(--text-dim); }
+    .spinner { width: 6px; height: 6px; border: 2px solid var(--accent); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .btn-primary { width: 100%; padding: 12px; background: var(--primary); color: #000; border: none; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; transition: transform 0.1s, opacity 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn-primary:hover { opacity: 0.9; }
+
+    /* DASHBOARD */
+    .dashboard { flex: 1; display: flex; flex-direction: column; background: #0c0c0e; position: relative; }
+    .top-bar { height: 50px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; justify-content: space-between; background: var(--surface); }
+    .status-badge { font-family: var(--font-mono); font-size: 11px; padding: 4px 8px; border-radius: 4px; background: var(--surface-highlight); color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim); }
+    .status-badge.active .status-dot { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+    .status-badge.active { color: var(--primary); background: rgba(0, 229, 153, 0.1); }
+    .session-timer { font-family: var(--font-mono); font-size: 14px; color: var(--primary); font-weight: 600; letter-spacing: 1px; }
+
+    .content-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .panel { display: flex; flex-direction: column; border-bottom: 1px solid var(--border); background: #000; flex: 1; }
+    .panel:last-child { border-bottom: none; }
+    .panel-header { padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+    .panel-dropdown { background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: var(--font-mono); font-size: 11px; padding: 4px 8px; border-radius: 4px; width: 200px; }
+    .panel-body { flex: 1; display: flex; flex-direction: column; padding: 12px; gap: 12px; }
+    .panel-textarea { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: var(--font-mono); font-size: 12px; padding: 12px; border-radius: 6px; resize: none; line-height: 1.5; }
+    .panel-textarea:focus { border-color: var(--accent); }
+    .file-attach-container { display: flex; align-items: center; gap: 8px; }
+    .file-input { font-size: 11px; color: var(--text-dim); }
+    .file-input::-webkit-file-upload-button { background: var(--surface-highlight); border: 1px solid var(--border); color: var(--text); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-family: var(--font-mono); margin-right: 8px; }
+    .footer { height: 32px; background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; gap: 24px; font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); }
+    .stat-item { display: flex; gap: 6px; }
+    .stat-val { color: var(--text); font-weight: 600; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    #dashboardImageBox { 
+    overflow-y: auto; 
+    flex: 1;
+    min-height: 0;
+}
+</style>
+</head>
+<body>
+
+    <!-- CONFIGURATION SIDEBAR -->
+    <div class="sidebar">
+        <div class="brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3v18h18" />
+                <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" />
+            </svg>
+            Quantech<span>Demo</span>
+        </div>
+
+        <!-- Step 1: Target (Indian Stocks) -->
+        <div class="form-group">
+            <label class="form-label">Analysis Target</label>
+            <div class="input-row">
+                <div>
+                    <select id="ticker">
+                        <option value="RELIANCE.NS" selected>RELIANCE (Reliance Ind)</option>
+                        <option value="TCS.NS">TCS (Tata Consultancy)</option>
+                        <option value="HDFCBANK.NS">HDFCBANK (HDFC Bank)</option>
+                        <option value="INFY.NS">INFY (Infosys)</option>
+                        <option value="ICICIBANK.NS">ICICIBANK (ICICI Bank)</option>
+                        <option value="SBIN.NS">SBIN (SBI)</option>
+                        <option value="BHARTIARTL.NS">BHARTIARTL (Airtel)</option>
+                        <option value="ITC.NS">ITC (ITC Ltd)</option>
+                        <option value="KOTAKBANK.NS">KOTAKBANK (Kotak Bank)</option>
+                        <option value="LT.NS">LT (Larsen & Toubro)</option>
+                        <option value="TATAMOTORS.NS">TATAMOTORS (Tata Motors)</option>
+                        <option value="NIFTY_50.NS">^NSEI (Nifty 50)</option>
+                    </select>
+                </div>
+                <div>
+                    <input type="date" id="analysisDate" onmouseover="try{this.showPicker()}catch(e){}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Data Source -->
+        <div class="form-group">
+            <label class="form-label">Data Source</label>
+            <div class="checkbox-group">
+                <label class="checkbox-card" onclick="toggleCheckbox(this, event)">
+                    <input type="checkbox" value="market">
+                    <span class="checkbox-icon">📈</span> Market
+                </label>
+                <label class="checkbox-card selected" onclick="toggleCheckbox(this, event)">
+                    <input type="checkbox" value="social" checked>
+                    <span class="checkbox-icon">🐦</span> Social
+                </label>
+                <label class="checkbox-card selected" onclick="toggleCheckbox(this, event)">
+                    <input type="checkbox" value="news" checked>
+                    <span class="checkbox-icon">📰</span> News
+                </label>
+                <label class="checkbox-card selected" onclick="toggleCheckbox(this, event)">
+                    <input type="checkbox" value="fundamentals" checked>
+                    <span class="checkbox-icon">📊</span> Fundamental
+                </label>
+            </div>
+        </div>
+
+        <!-- Step 3: Research Depth -->
+        <!-- <div class="form-group">
+            <label class="form-label">Research Depth (Debate Rounds)</label>
+            <div class="radio-group" id="depthGroup">
+                <div class="radio-option" onclick="selectDepth(1, this)">Shallow (1)</div>
+                <div class="radio-option active" onclick="selectDepth(3, this)">Medium (3)</div>
+                <div class="radio-option" onclick="selectDepth(5, this)">Deep (5)</div>
+            </div>
+            <input type="hidden" id="researchDepth" value="3">
+        </div> -->
+
+        <!-- Step 4: LLM Provider -->
+        <div class="form-group">
+            <label class="form-label">LLM Provider</label>
+            <select id="llmProvider" onchange="updateModels()">
+                <option value="openai" selected>OpenAI</option>
+                <option value="anthropic">Anthropic</option>
+                <option value="google">Google Gemini</option>
+                <option value="xai">xAI (Grok)</option>
+                <option value="ollama">Ollama (Local)</option>
+                <option value="lmstudio">LM Studio (Local)</option> 
+                <option value="openrouter">OpenRouter</option>
+            </select>
+        </div>
+
+        <!-- Step 5: Model -->
+        <div class="form-group">
+            <label class="form-label">Model</label>
+            <select id="modelSelect">
+                <!-- Populated via JS -->
+            </select>
+        </div>
+
+
+        
+        <!-- ADVANCED CONFIGURATION -->
+        <div class="advanced-section">
+            <div class="advanced-title" onclick="toggleAdvanced()">
+                <span>ADVANCED CONFIGURATION</span>
+                <span>▼</span>
+            </div>
+            <div class="advanced-content" id="advancedContent">
+                
+                <!-- Debate Rounds -->
+                <div class="form-group">
+                    <label class="form-label">Max Debate Rounds (Research)</label>
+                    <select id="debateRounds">
+                        <option value="1">1 Round (Shallow)</option>
+                        <option value="2">2 Rounds</option>
+                        <option value="3" selected>3 Rounds (Medium)</option>
+                        <option value="4">4 Rounds</option>
+                        <option value="5">5 Rounds (Deep)</option>
+                    </select>
+                </div>
+
+                <!-- Risk Rounds -->
+                <div class="form-group">
+                    <label class="form-label">Max Risk Rounds</label>
+                    <input type="number" id="riskRounds" value="1" min="1" max="5">
+                </div>
+
+                <!-- Recursion Limit -->
+                <div class="form-group">
+                    <label class="form-label">Max Recursion Limit</label>
+                    <input type="number" id="recurLimit" value="100" min="10" max="500">
+                </div>
+
+                <!-- Results Directory -->
+                <div class="form-group">
+                    <label class="form-label">Results Directory</label>
+                    <input type="text" id="resultsDir" value="./results" placeholder="e.g. C:/Trading/Results">
+                </div>
+
+                <!-- Data Vendors -->
+                <div class="form-group">
+                    <label class="form-label">Data Vendors</label>
+                    <div class="input-row">
+                        <select id="vendorStock">
+                            <option value="yfinance" selected>Stock: yFinance</option>
+                            <option value="alpha_vantage">Stock: AlphaVantage</option>
+                        </select>
+                        <select id="vendorNews">
+                            <option value="yfinance" selected>News: yFinance</option>
+                            <option value="alpha_vantage">News: AlphaVantage</option>
+                        </select>
+                    </div>
+                    <div class="input-row" style="margin-top:8px;">
+                        <select id="vendorFund">
+                            <option value="yfinance" selected>Fund: yFinance</option>
+                            <option value="alpha_vantage">Fund: AlphaVantage</option>
+                        </select>
+                        <select id="vendorTech">
+                            <option value="yfinance" selected>Tech: yFinance</option>
+                            <option value="alpha_vantage">Tech: AlphaVantage</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Agent Status -->
+        <div class="form-group">
+            <label class="form-label">Agent Status</label>
+            <div class="agent-grid">
+                <!-- Analysts -->
+                
+                <!-- Research -->
+                <div class="agent-card" id="agent-bull" onclick="toggleAgentCard(this)">
+                    <div class="agent-role">Research</div>
+                    <div class="agent-name">Bull</div>
+                    <div class="agent-status"><div class="spinner"></div><span>Pending</span></div>
+                </div>
+                <div class="agent-card" id="agent-bear" onclick="toggleAgentCard(this)">
+                    <div class="agent-role">Research</div>
+                    <div class="agent-name">Bear</div>
+                    <div class="agent-status"><div class="spinner"></div><span>Pending</span></div>
+                </div>
+                
+                <!-- Execution -->
+                <div class="agent-card" id="agent-trader" onclick="toggleAgentCard(this)">
+                    <div class="agent-role">Execution</div>
+                    <div class="agent-name">Trader</div>
+                    <div class="agent-status"><div class="spinner"></div><span>Pending</span></div>
+                </div>
+
+                <!-- Manager -->
+                <div class="agent-card" id="agent-risk" onclick="toggleAgentCard(this)">
+                    <div class="agent-role">Manager</div>
+                    <div class="agent-name">Risk Mgr</div>
+                    <div class="agent-status"><div class="spinner"></div><span>Pending</span></div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-primary" onclick="startAnalysis()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 3l14 9-14 9V3z" />
+            </svg>
+            Start Analysis
+        </button>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div class="dashboard">
+        <div class="top-bar">
+            <div class="status-badge" id="globalStatus">
+                <div class="status-dot"></div>
+                <span id="statusText">IDLE</span>
+            </div>
+            <div class="session-timer" id="sessionTimer">00:00:00</div>
+        </div>
+          
+        <div class="panel">
+            <div class="panel-header" style="flex-direction: column; gap: 6px; padding: 10px 16px;">
+                <div style="font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--text-dim); letter-spacing: 0.05em;">DYNAMIC DASHBOARD</div>
+                <select class="panel-dropdown" id="dashboardDropdown" style="width: 100%;" onchange="onDashboardSelect(this.value)">
+                    <option value="">— select a dashboard —</option>
+                </select>
+            </div>
+            <div class="panel-body">
+                <textarea class="panel-textarea" id="dashboardInput" placeholder="Dashboard output or user notes..."></textarea>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div style="font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--text-dim); letter-spacing: 0.05em;">REPORTS</div>
+                <select class="panel-dropdown" id="reportDropdown" style="width: 60%;" onchange="onReportSelect(this.value)">
+                    <option value="">— select a report —</option>
+                </select>
+            </div>
+            <div class="panel-body">
+                <textarea class="panel-textarea" id="reportInput" placeholder="Reports will appear here after analysis..."></textarea>
+                <div class="file-attach-container">
+                    <input type="file" class="file-input">
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="stat-item">LLM Calls: <span class="stat-val" id="statLLM">0</span></div>
+            <div class="stat-item">Tool Calls: <span class="stat-val" id="statTool">0</span></div>
+            <div class="stat-item">Tokens: <span class="stat-val" id="statTokens">0</span></div>
+            <button onclick="openLogsWindow()" style="margin-left:auto; background:var(--surface-highlight); border:1px solid var(--border); color:var(--primary); font-family:var(--font-mono); font-size:10px; padding:4px 10px; border-radius:4px; cursor:pointer;">
+                📋 LOGS
+            </button>
+        </div>
+    </div>
+
+<script>
+    // --- CONFIGURATION LOGIC ---
+    document.getElementById('analysisDate').valueAsDate = new Date();
+
+    // Default Models
+    const models = {
+        openai: ["gpt-5", "gpt-5-mini", "gpt-4.1", "gpt-4o"],
+        anthropic: ["claude-sonnet-4-5", "claude-opus-4-5", "claude-haiku-4-5"],
+        google: ["gemini-3-pro-preview", "gemini-3-flash-preview", "gemini-2.5-flash"],
+        xai: ["grok-4", "grok-4-1-fast-reasoning"],
+        openrouter: ["nvidia/nemotron-3-nano", "z-ai/glm-4.5-air"]
+    };
+
+    async function updateModels() {
+        const provider = document.getElementById('llmProvider').value;
+        const modelSelect = document.getElementById('modelSelect');
+        modelSelect.innerHTML = '';
+
+        if (provider === 'ollama') {
+            // Fetch from local backend
+            const opt = document.createElement('option');
+            opt.text = "Fetching local models...";
+            modelSelect.add(opt);
+            
+            try {
+                const res = await fetch('http://localhost:8000/api/ollama_models');
+                const data = await res.json();
+                modelSelect.innerHTML = '';
+                
+                if (data.models && data.models.length > 0) {
+                    data.models.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m;
+                        opt.text = m;
+                        modelSelect.add(opt);
+                    });
+                } else {
+                    const opt = document.createElement('option');
+                    opt.text = "No models found";
+                    modelSelect.add(opt);
+                }
+            } catch (e) {
+                modelSelect.innerHTML = '<option>Error fetching models</option>';
+            }
+        } else if (provider === 'lmstudio') { // ADDED LM STUDIO LOGIC
+            const opt = document.createElement('option');
+            opt.text = "Connecting to LM Studio...";
+            modelSelect.add(opt);
+            try {
+                const res = await fetch('http://localhost:8000/api/lmstudio_models');
+                const data = await res.json();
+                modelSelect.innerHTML = '';
+                if (data.models && data.models.length > 0) {
+                    data.models.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m;
+                        opt.text = m;
+                        modelSelect.add(opt);
+                    });
+                } else {
+                    modelSelect.add(new Option("No loaded models (Check LM Studio)", ""));
+                }
+            } catch (e) {
+                modelSelect.innerHTML = '<option>Error connecting to LM Studio</option>';
+            }
+        }
+        else {
+            models[provider].forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.text = m;
+                modelSelect.add(opt);
+            });
+        }
+    }
+
+    updateModels();
+
+    // --- INTERACTION LOGIC ---
+
+    // Toggle Checkbox (Data Source) - No sync with agents
+    function toggleCheckbox(el, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    el.classList.toggle('selected');
+    const checkbox = el.querySelector('input');
+    checkbox.checked = !checkbox.checked;
+}
+
+    // Toggle Agent Card (Agent Status) - No sync with checkboxes
+    function toggleAgentCard(el) {
+        el.classList.toggle('selected-agent');
+    }
+
+    function selectDepth(val, el) {
+        document.getElementById('researchDepth').value = val;
+        document.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    // --- APP LOGIC ---
+    const state = { isRunning: false, reports: {}, dashboards: {}, currentReportKey: "" };
+    
+    document.getElementById('reportInput').addEventListener('keydown', async (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const question = e.target.value.trim().split('\n').pop();
+        if (!question) return;
+        e.target.value += `\n\n> User: ${question}\n> AI: Thinking...`;
+        e.target.scrollTop = e.target.scrollHeight;
+        await askQuestionToReport(question);
+    }
+});
+
+    async function startAnalysis() {
+        if (state.isRunning) return;
+
+        // Get selected downstream agents
+        const selectedAgentCards = [];
+        const agentCardMapping = {
+            'agent-bull': 'bull',
+            'agent-bear': 'bear', 
+            'agent-trader': 'trader',
+            'agent-risk': 'risk'
+        };
+        document.querySelectorAll('.agent-card.selected-agent').forEach(card => {
+            if (agentCardMapping[card.id]) selectedAgentCards.push(agentCardMapping[card.id]);
+        });
+
+        const config = {
+            ticker: document.getElementById('ticker').value,
+            date: document.getElementById('analysisDate').value,
+            analysts: getSelectedAnalysts(),
+            selected_agents: selectedAgentCards,  // bull, bear, trader, risk
+            provider: document.getElementById('llmProvider').value,
+            model_deep: document.getElementById('modelSelect').value,
+            model_fast: document.getElementById('modelSelect').value,
+            reasoning_effort: "medium",
+            max_debate_rounds: parseInt(document.getElementById('debateRounds').value),
+            max_risk_rounds: parseInt(document.getElementById('riskRounds').value),
+            max_recur_limit: parseInt(document.getElementById('recurLimit').value),
+            results_dir: document.getElementById('resultsDir').value,
+            vendors: {
+                core_stock_apis: document.getElementById('vendorStock').value,
+                news_data: document.getElementById('vendorNews').value,
+                fundamental_data: document.getElementById('vendorFund').value,
+                technical_indicators: document.getElementById('vendorTech').value,
+            }
+        };
+
+        // Clear first
+        state.isRunning = true;
+        state.reports = {};
+        document.getElementById('globalStatus').classList.add('active');
+        document.getElementById('statusText').innerText = 'RUNNING';
+        document.getElementById('dashboardInput').value = '';
+        document.getElementById('reportInput').value = 'Waiting for reports...';
+
+        // Log what user chose vs defaults
+        logToDashboard(`=== ANALYSIS CONFIG ===`);
+        logToDashboard(`Ticker: ${config.ticker} | Date: ${config.date}`);
+        logToDashboard(`Analysts: ${config.analysts.join(', ')}`);
+        logToDashboard(`Provider: ${config.provider} | Model: ${config.model_deep}`);
+        logToDashboard(`Research Depth: ${config.research_depth} rounds`);
+        logToDashboard(`Research Depth: ${config.max_debate_rounds} rounds`);
+        logToDashboard(`--- Advanced ---`);
+        logToDashboard(`Debate Rounds: ${document.getElementById('debateRounds').value} | Risk Rounds: ${document.getElementById('riskRounds').value}`);
+        logToDashboard(`Recursion Limit: ${document.getElementById('recurLimit').value}`);
+        logToDashboard(`Results Dir: ${document.getElementById('resultsDir').value}`);
+        logToDashboard(`Vendors → Stock: ${document.getElementById('vendorStock').value} | News: ${document.getElementById('vendorNews').value} | Fund: ${document.getElementById('vendorFund').value} | Tech: ${document.getElementById('vendorTech').value}`);
+        logToDashboard(`=== STARTING ===`);
+
+        state.isRunning = true;
+        state.reports = {};
+        document.getElementById('globalStatus').classList.add('active');
+        document.getElementById('statusText').innerText = 'RUNNING';
+        document.getElementById('dashboardInput').value = '';
+        document.getElementById('reportInput').value = 'Waiting for reports...';
+        
+        // Reset Agents Visuals (Keep selection, reset status)
+        document.querySelectorAll('.agent-card').forEach(c => {
+            c.classList.remove('completed', 'running');
+            c.querySelector('.spinner').style.display = 'none';
+            c.querySelector('.agent-status span').innerText = 'Pending';
+            c.querySelector('.agent-status span').style.color = 'var(--text-dim)';
+        });
+
+        try {
+            const res = await fetch('http://localhost:8000/api/start_analysis', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+
+            if(!res.ok) throw new Error("Backend failed to start");
+
+            const evtSource = new EventSource('http://localhost:8000/api/stream_logs');
+
+            evtSource.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                handleBackendEvent(data, evtSource);
+            };
+
+            evtSource.onerror = (e) => {
+                console.error("Stream Error", e);
+                evtSource.close();
+                finishAnalysis();
+            };
+
+        } catch (e) {
+            logToDashboard(`ERROR: ${e.message}`);
+            finishAnalysis();
+        }
+    }
+
+    function handleBackendEvent(data, evtSource) {
+        if (data.type === 'log') {
+            logToDashboard(data.content);
+            if (data.stats) updateStats(data.stats);
+        }
+        else if (data.type === 'status') {
+            setAgentStatus(data.agent, data.status);
+        }
+        else if (data.type === 'report') {
+            const title = data.title;
+            state.reports[title] = data.content;
+            addReportToDropdown(title);
+            if (Object.keys(state.reports).length === 1 || title === "Final Portfolio Decision") {
+            state.currentReportKey = title;
+            updateReportView(title);
+        }
+        }
+        else if (data.type === 'complete') {
+            evtSource.close();
+            finishAnalysis();
+        }
+        else if (data.type === 'dashboard') {
+            addDashboardToDropdown(data.title, data.data);
+        }
+    }
+
+    async function askQuestionToReport(question) {
+        const context = state.reports[state.currentReportKey] || "";
+        if (!context) return;
+        try {
+            const res = await fetch('http://localhost:8000/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question: question,
+                    context: context,
+                    provider: document.getElementById('llmProvider').value
+                })
+            });
+            const data = await res.json();
+            const ta = document.getElementById('reportInput');
+            ta.value = ta.value.replace("> AI: Thinking...", `> AI: ${data.answer}\n\n`);
+            ta.scrollTop = ta.scrollHeight;
+        } catch (e) {
+            const ta = document.getElementById('reportInput');
+            ta.value += `\nError: ${e.message}\n`;
+        }
+    }
+
+    // Logs go to hidden textarea only (for LOGS popup window)
+    function logToDashboard(msg) {
+        const db = document.getElementById('dashboardInput');
+        const time = new Date().toLocaleTimeString();
+        db.value += `[${time}] ${msg}\n`;
+    }
+
+    function updateStats(stats) {
+        document.getElementById('statLLM').innerText = stats.llm_calls;
+        document.getElementById('statTool').innerText = stats.tool_calls;
+        document.getElementById('statTokens').innerText = stats.tokens;
+    }
+
+    function setAgentStatus(agentKey, status) {
+        let id = "";
+        if(agentKey.includes("market")) id = "agent-market";
+        else if(agentKey.includes("news")) id = "agent-news";
+        else if(agentKey.includes("social")) id = "agent-social";
+        else if(agentKey.includes("fund")) id = "agent-fundamentals";
+        else if(agentKey.includes("bull")) id = "agent-bull";
+        else if(agentKey.includes("bear")) id = "agent-bear";
+        else if(agentKey.includes("trader")) id = "agent-trader";
+        else if(agentKey.includes("risk")) id = "agent-risk";
+        
+        const card = document.getElementById(id);
+        if(!card) return;
+
+        const spinner = card.querySelector('.spinner');
+        const txt = card.querySelector('.agent-status span');
+
+        if(status === 'thinking') {
+            spinner.style.display = 'block';
+            txt.innerText = 'Thinking...';
+            txt.style.color = 'var(--primary)';
+            card.classList.add('running');
+        } else if (status === 'completed') {
+            spinner.style.display = 'none';
+            txt.innerText = 'Completed';
+            txt.style.color = '#fff';
+            card.classList.remove('running');
+            card.classList.add('completed');
+        }
+    }
+
+    function addReportToDropdown(title) {
+        const dd = document.getElementById('reportDropdown');
+        for(let i = 0; i < dd.options.length; i++) {
+            if(dd.options[i].value === title) return;
+        }
+        const opt = document.createElement('option');
+        opt.text = title;
+        opt.value = title;
+        dd.add(opt);
+        // Auto-select first real report
+        if(dd.options.length === 2) {
+            dd.value = title;
+            onReportSelect(title);
+        }
+    }
+
+    function addDashboardToDropdown(title, content) {
+    state.dashboards[title] = content;
+    const dd = document.getElementById('dashboardDropdown');
+    for(let i = 0; i < dd.options.length; i++) {
+        if(dd.options[i].value === title) return;
+    }
+    const opt = document.createElement('option');
+    opt.text = title;
+    opt.value = title;
+    dd.add(opt);
+    if(dd.options.length === 2) {
+        dd.value = title;
+        onDashboardSelect(title);
+    }
+}
+
+    function onReportSelect(key) {
+        if(!key) return;
+        state.currentReportKey = key;
+        updateReportView(key);
+    }
+
+    function onDashboardSelect(value) {
+    if(!value) return;
+    const box = document.getElementById('dashboardImageBox');
+    const data = state.dashboards[value];
+    if(!data) {
+        box.innerHTML = `<span style="color:var(--text-dim); font-family:var(--font-mono); font-size:11px;">No dashboard data yet.</span>`;
+        return;
+    }
+    // data is { input, output, relationship } base64 PNGs
+    box.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:12px; padding:12px; width:100%;">
+            <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">📥 INPUT</div>
+            <img src="data:image/png;base64,${data.input}" style="width:100%; border-radius:6px; border:1px solid var(--border);">
+            <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">📤 OUTPUT</div>
+            <img src="data:image/png;base64,${data.output}" style="width:100%; border-radius:6px; border:1px solid var(--border);">
+            <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">🔗 RELATIONSHIP</div>
+            <img src="data:image/png;base64,${data.relationship}" style="width:100%; border-radius:6px; border:1px solid var(--border);">
+        </div>`;
+}
+
+    function updateReportView(key) {
+    const ta = document.getElementById('reportInput');
+    ta.value = state.reports[key] || "No report data.";
+    // Sync dropdown to match
+    const dd = document.getElementById('reportDropdown');
+    if(dd.value !== key) dd.value = key;
+}
+
+    function getSelectedAnalysts() {
+        // Get from Data Source checkboxes
+        const fromCheckboxes = [];
+        document.querySelectorAll('.checkbox-card.selected input').forEach(i => fromCheckboxes.push(i.value));
+        
+        // Get from Agent Status cards
+        const fromAgents = [];
+        const agentMapping = {
+            'agent-market': 'market',
+            'agent-news': 'news',
+            'agent-social': 'social',
+            'agent-fundamentals': 'fundamentals'
+        };
+        
+        document.querySelectorAll('.agent-card.selected-agent').forEach(card => {
+            const agentValue = agentMapping[card.id];
+            if (agentValue) fromAgents.push(agentValue);
+        });
+        
+        // Combine both (use Set to avoid duplicates)
+        return [...new Set([...fromCheckboxes, ...fromAgents])];
+    }
+
+    let timerInt;
+    function startSessionTimer() {
+    clearInterval(timerInt);
+    timerInt = setInterval(() => {
+        const now = new Date();
+        document.getElementById('sessionTimer').innerText = now.toLocaleTimeString('en-GB');
+    }, 1000);
+    // Start immediately
+    const now = new Date();
+    document.getElementById('sessionTimer').innerText = now.toLocaleTimeString('en-GB');
+}
+    startSessionTimer();
+
+    function finishAnalysis() {
+        state.isRunning = false;
+        document.getElementById('globalStatus').classList.remove('active');
+        document.getElementById('statusText').innerText = 'DONE';
+        clearInterval(timerInt);
+    }
+
+    function toggleAdvanced() {
+    const content = document.getElementById('advancedContent');
+    content.classList.toggle('open');
+    }
+  function openLogsWindow() {
+    const raw = document.getElementById('dashboardInput').value || 'No logs yet.'; 
+    const win = window.open('', '_blank', 'width=900,height=650,top=100,left=100');
+        win.document.write(`
+        <html>
+        <head>
+            <title> Quantech Demo // Logs</title>
+            <style>
+                body { background:#09090b; color:#e4e4e7; font-family:'JetBrains Mono',monospace; font-size:12px; padding:20px; margin:0; }
+                h3 { color:#00e599; margin-bottom:12px; }
+                .toolbar { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+                button { background:#27272a; border:1px solid #3f3f46; color:#e4e4e7; padding:6px 12px; border-radius:4px; cursor:pointer; font-family:monospace; }
+                button.active { border-color:#00e599; color:#00e599; }
+                pre { white-space:pre-wrap; word-break:break-word; line-height:1.6; }
+                #logContainer { background:#000; padding:12px; border-radius:6px; border:1px solid #3f3f46; max-height:500px; overflow-y:auto; }
+
+                /* --- Standard Log Level Colors --- */
+                .line-INFO { color:#e4e4e7; } /* Default */
+                .line-DEBUG { color:#a1a1aa; }
+                .line-WARNING { color:#f59e0b; }
+                .line-ERROR { color:#ef4444; }
+                
+                /* --- Custom Log Type Colors --- */
+                .line-CONFIG { color:#3b82f6; }
+                .line-SYSTEM { color:#00e599; }
+                .line-GRAPH { color:#8b5cf6; }  /* Added purple for GRAPH */
+                .line-AGENT { color:#ec4899; }  /* Added pink for AGENT */
+
+            </style>
+        </head>
+        <body>
+            <h3>⚡ Quantech Demo Log Output</h3>
+            <div class="toolbar">
+                <button onclick="window.close()">✕ Close</button>
+                <button onclick="navigator.clipboard.writeText(document.getElementById('logContainer').innerText)">📋 Copy All</button>
+                <button class="active" onclick="filterLogs('ALL', this)">ALL</button>
+                <button onclick="filterLogs('INFO', this)">INFO</button>
+                <button onclick="filterLogs('DEBUG', this)">DEBUG</button>
+                <button onclick="filterLogs('WARNING', this)">WARNING</button>
+                <button onclick="filterLogs('ERROR', this)">ERROR</button>
+                <button onclick="filterLogs('CONFIG', this)">CONFIG</button>
+                <button onclick="filterLogs('SYSTEM', this)">SYSTEM</button>
+                <button onclick="filterLogs('GRAPH', this)">GRAPH</button>
+                <button onclick="filterLogs('AGENT', this)">AGENT</button>
+            </div>
+            <div id="logContainer"><pre id="logPre"></pre></div>
+            <script>
+                const raw = ${JSON.stringify(raw)};
+                const lines = raw.split('\\n').filter(l => l.trim());
+
+                // ✅ IMPROVED: More specific checks for styling
+                function getLineClass(line) {
+                    if (line.startsWith('[ERROR]') || line.startsWith('ERROR:')) return 'line-ERROR';
+                    if (line.startsWith('[WARNING]')) return 'line-WARNING';
+                    if (line.startsWith('[DEBUG]')) return 'line-DEBUG';
+                    if (line.startsWith('CONFIG:')) return 'line-CONFIG';
+                    if (line.startsWith('SYSTEM:')) return 'line-SYSTEM';
+                    if (line.startsWith('GRAPH:')) return 'line-GRAPH';
+                    if (line.startsWith('AGENT:')) return 'line-AGENT';
+                    // Check for other agent types if needed
+                    if (line.startsWith('MANAGER:') || line.startsWith('RESEARCH:') || line.startsWith('EXECUTION:')) return 'line-AGENT';
+                    return 'line-INFO'; // Default for everything else
+                }
+
+                // ✅ IMPROVED: More specific filtering logic
+                function filterLogs(level, btn) {
+                    document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const pre = document.getElementById('logPre');
+                    pre.innerHTML = '';
+                    
+                    lines.forEach(line => {
+                        let showLine = false;
+                        if (level === 'ALL') {
+                            showLine = true;
+                        } else if (level === 'INFO') {
+                            // Special case for INFO: show if no other known category matches
+                            showLine = getLineClass(line) === 'line-INFO';
+                        } else {
+                            // Check for bracketed levels or prefixes
+                            showLine = line.startsWith('[' + level + ']') || line.startsWith(level + ':');
+                        }
+
+                        if (showLine) {
+                            const span = document.createElement('span');
+                            span.className = getLineClass(line);
+                            span.textContent = line + '\\n';
+                            pre.appendChild(span);
+                        }
+                    });
+                }
+
+                // Initial load
+                filterLogs('ALL', document.querySelector('button.active'));
+            <\/script> 
+        </body>
+        </html>
+    `);
+    win.document.close();
+}
+</script>
+</body>
+</html>

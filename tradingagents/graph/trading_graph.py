@@ -38,6 +38,8 @@ from .setup import GraphSetup
 from .propagation import Propagator
 from .reflection import Reflector
 from .signal_processing import SignalProcessor
+import logging
+logger = logging.getLogger("tradingagents")
 
 
 class TradingAgentsGraph:
@@ -46,6 +48,7 @@ class TradingAgentsGraph:
     def __init__(
         self,
         selected_analysts=["market", "social", "news", "fundamentals"],
+        selected_agents=None,
         debug=False,
         config: Dict[str, Any] = None,
         callbacks: Optional[List] = None,
@@ -54,6 +57,7 @@ class TradingAgentsGraph:
 
         Args:
             selected_analysts: List of analyst types to include
+            selected_agents: List of downstream agents to include (bull, bear, trader, risk)
             debug: Whether to run in debug mode
             config: Configuration dictionary. If None, uses default config
             callbacks: Optional list of callback handlers (e.g., for tracking LLM/tool stats)
@@ -61,9 +65,11 @@ class TradingAgentsGraph:
         self.debug = debug
         self.config = config or DEFAULT_CONFIG
         self.callbacks = callbacks or []
+        self.selected_agents = selected_agents
 
         # Update the interface's config
         set_config(self.config)
+        logger.info(f"TradingAgentsGraph initializing | Provider={self.config['llm_provider']} | DeepModel={self.config['deep_think_llm']} | Analysts={selected_analysts}")
 
         # Create necessary directories
         os.makedirs(
@@ -92,6 +98,7 @@ class TradingAgentsGraph:
         )
 
         self.deep_thinking_llm = deep_client.get_llm()
+        logger.info("LLM clients created successfully")
         self.quick_thinking_llm = quick_client.get_llm()
         
         # Initialize memories
@@ -128,7 +135,8 @@ class TradingAgentsGraph:
         self.log_states_dict = {}  # date to full state dict
 
         # Set up the graph
-        self.graph = self.graph_setup.setup_graph(selected_analysts)
+        self.graph = self.graph_setup.setup_graph(selected_analysts, selected_agents=self.selected_agents)
+        logger.info(f"Graph setup complete with analysts={selected_analysts}")
 
     def _get_provider_kwargs(self) -> Dict[str, Any]:
         """Get provider-specific kwargs for LLM client creation."""
@@ -192,6 +200,7 @@ class TradingAgentsGraph:
         init_agent_state = self.propagator.create_initial_state(
             company_name, trade_date
         )
+        logger.info(f"Starting propagation for {company_name} on {trade_date}")
         args = self.propagator.get_graph_args()
 
         if self.debug:
@@ -251,7 +260,8 @@ class TradingAgentsGraph:
         }
 
         # Save to file
-        directory = Path(f"eval_results/{self.ticker}/TradingAgentsStrategy_logs/")
+        results_base = self.config.get("results_dir", "./results")
+        directory = Path(f"{results_base}/{self.ticker}/logs/")
         directory.mkdir(parents=True, exist_ok=True)
 
         with open(
