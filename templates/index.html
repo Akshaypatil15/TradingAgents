@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TradingAgents // Command Center</title>
+    <meta
+      name="description"
+      content="AI-powered multi-agent trading analysis. Configure, execute, and monitor agent workflows."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="static/css/styles.css" />
+  </head>
+  <body>
+    <!-- ============================================================
+       SIDEBAR
+       ============================================================ -->
+    <aside class="sidebar" aria-label="Configuration panel">
+      <div class="sidebar-inner">
+        <!-- Brand -->
+        <header class="brand">
+          <div class="brand-icon" aria-hidden="true">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 3v18h18" />
+              <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" />
+            </svg>
+          </div>
+          <div class="brand-text">Trading<span>Agents</span></div>
+          <div class="brand-tag">v1.0</div>
+        </header>
+
+        <!-- Ticker / Date -->
+        <div class="form-group">
+          <label class="form-label" for="ticker">Analysis Target</label>
+          <div class="input-row">
+            <div>
+              <select id="ticker" aria-label="Stock ticker">
+                <option value="RELIANCE.NS" selected>
+                  RELIANCE (Reliance Ind)
+                </option>
+                <option value="TCS.NS">TCS (Tata Consultancy)</option>
+                <option value="HDFCBANK.NS">HDFCBANK (HDFC Bank)</option>
+                <option value="INFY.NS">INFY (Infosys)</option>
+                <option value="ICICIBANK.NS">ICICIBANK (ICICI Bank)</option>
+                <option value="SBIN.NS">SBIN (SBI)</option>
+                <option value="BHARTIARTL.NS">BHARTIARTL (Airtel)</option>
+                <option value="ITC.NS">ITC (ITC Ltd)</option>
+                <option value="KOTAKBANK.NS">KOTAKBANK (Kotak Bank)</option>
+                <option value="LT.NS">LT (Larsen &amp; Toubro)</option>
+                <option value="TATAMOTORS.NS">TATAMOTORS (Tata Motors)</option>
+                <option value="NIFTY_50.NS">^NSEI (Nifty 50 Index)</option>
+              </select>
+            </div>
+            <div>
+              <input type="date" id="analysisDate" aria-label="Analysis date" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Sources -->
+        <fieldset class="form-group" style="border: none">
+          <legend class="form-label">Data Sources</legend>
+          <div class="checkbox-group" id="dataSourceGroup">
+            <label class="checkbox-card selected">
+              <input type="checkbox" value="market" checked />
+              <span class="checkbox-icon" aria-hidden="true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                  <polyline points="16 7 22 7 22 13" />
+                </svg>
+              </span>
+              Market
+            </label>
+            <label class="checkbox-card selected">
+              <input type="checkbox" value="social" checked />
+              <span class="checkbox-icon" aria-hidden="true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M17 2h4v4" />
+                  <path d="M21 2l-9 9" />
+                  <path
+                    d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"
+                  />
+                </svg>
+              </span>
+              Social
+            </label>
+            <label class="checkbox-card selected">
+              <input type="checkbox" value="news" checked />
+              <span class="checkbox-icon" aria-hidden="true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"
+                  />
+                </svg>
+              </span>
+              News
+            </label>
+            <label class="checkbox-card selected">
+              <input type="checkbox" value="fundamentals" checked />
+              <span class="checkbox-icon" aria-hidden="true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+              </span>
+              Fundamental
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- LLM Provider -->
+        <div class="form-group">
+          <label class="form-label" for="llmProvider">LLM Provider</label>
+          <select id="llmProvider">
+            <option value="openai" selected>OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="google">Google Gemini</option>
+            <option value="xai">xAI (Grok)</option>
+            <option value="ollama">Ollama (Local)</option>
+            <option value="lmstudio">LM Studio (Local)</option>
+            <option value="openrouter">OpenRouter</option>
+          </select>
+        </div>
+
+        <!-- Model -->
+        <div class="form-group">
+          <label class="form-label" for="modelSelect">Model</label>
+          <select id="modelSelect" aria-label="LLM model"></select>
+        </div>
+
+        <!-- Advanced -->
+        <div class="advanced-section">
+          <button
+            class="advanced-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="advancedContent"
+            id="advancedBtn"
+          >
+            <span>Advanced Configuration</span>
+            <span class="advanced-arrow" aria-hidden="true">&#9660;</span>
+          </button>
+          <div class="advanced-content" id="advancedContent" role="region">
+            <div class="form-group">
+              <label class="form-label" for="debateRounds"
+                >Max Debate Rounds</label
+              >
+              <select id="debateRounds">
+                <option value="1">1 Round (Shallow)</option>
+                <option value="2">2 Rounds</option>
+                <option value="3" selected>3 Rounds (Default)</option>
+                <option value="4">4 Rounds</option>
+                <option value="5">5 Rounds (Deep)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="riskRounds">Max Risk Rounds</label>
+              <input type="number" id="riskRounds" value="1" min="1" max="5" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="recurLimit"
+                >Max Recursion Limit</label
+              >
+              <input
+                type="number"
+                id="recurLimit"
+                value="100"
+                min="10"
+                max="500"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="resultsDir"
+                >Results Directory</label
+              >
+              <input
+                type="text"
+                id="resultsDir"
+                value="./results"
+                placeholder="./results"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Data Vendors</label>
+              <div class="input-row">
+                <select id="vendorStock" aria-label="Stock data vendor">
+                  <option value="yfinance" selected>Stock: yFinance</option>
+                  <option value="alpha_vantage">Stock: AlphaVantage</option>
+                </select>
+                <select id="vendorNews" aria-label="News data vendor">
+                  <option value="yfinance" selected>News: yFinance</option>
+                  <option value="alpha_vantage">News: AlphaVantage</option>
+                </select>
+              </div>
+              <div class="input-row" style="margin-top: 8px">
+                <select id="vendorFund" aria-label="Fundamentals vendor">
+                  <option value="yfinance" selected>Fund: yFinance</option>
+                  <option value="alpha_vantage">Fund: AlphaVantage</option>
+                </select>
+                <select id="vendorTech" aria-label="Technical data vendor">
+                  <option value="yfinance" selected>Tech: yFinance</option>
+                  <option value="alpha_vantage">Tech: AlphaVantage</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agent Status -->
+        <fieldset class="form-group" style="border: none">
+          <legend class="form-label">Agent Status</legend>
+          <div class="agent-grid">
+            <div
+              class="agent-card"
+              id="agent-bull"
+              tabindex="0"
+              role="button"
+              aria-label="Toggle Bull researcher"
+            >
+              <div class="agent-role">Research</div>
+              <div class="agent-name">Bull</div>
+              <div class="agent-status">
+                <div class="spinner"></div>
+                <svg
+                  class="check-icon"
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span class="agent-status-text">Pending</span>
+              </div>
+            </div>
+            <div
+              class="agent-card"
+              id="agent-bear"
+              tabindex="0"
+              role="button"
+              aria-label="Toggle Bear researcher"
+            >
+              <div class="agent-role">Research</div>
+              <div class="agent-name">Bear</div>
+              <div class="agent-status">
+                <div class="spinner"></div>
+                <svg
+                  class="check-icon"
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span class="agent-status-text">Pending</span>
+              </div>
+            </div>
+            <div
+              class="agent-card"
+              id="agent-trader"
+              tabindex="0"
+              role="button"
+              aria-label="Toggle Trader agent"
+            >
+              <div class="agent-role">Execution</div>
+              <div class="agent-name">Trader</div>
+              <div class="agent-status">
+                <div class="spinner"></div>
+                <svg
+                  class="check-icon"
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span class="agent-status-text">Pending</span>
+              </div>
+            </div>
+            <div
+              class="agent-card"
+              id="agent-risk"
+              tabindex="0"
+              role="button"
+              aria-label="Toggle Risk manager"
+            >
+              <div class="agent-role">Manager</div>
+              <div class="agent-name">Risk Mgr</div>
+              <div class="agent-status">
+                <div class="spinner"></div>
+                <svg
+                  class="check-icon"
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span class="agent-status-text">Pending</span>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Actions -->
+        <div class="btn-group">
+          <button class="btn-primary" id="startBtn" type="button">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              stroke="none"
+            >
+              <path d="M5 3l14 9-14 9V3z" />
+            </svg>
+            Start Analysis
+          </button>
+          <button
+            class="btn-danger"
+            id="stopBtn"
+            type="button"
+            title="Stop analysis"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              stroke="none"
+            >
+              <rect x="6" y="6" width="12" height="12" rx="1" />
+            </svg>
+            <span class="sr-only">Stop</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ============================================================
+       MAIN DASHBOARD
+       ============================================================ -->
+    <main class="dashboard">
+      <!-- Top bar -->
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <div class="status-badge" id="globalStatus">
+            <div class="status-dot"></div>
+            <span id="statusText">IDLE</span>
+          </div>
+          <div class="ticker-display" id="tickerDisplay">RELIANCE.NS</div>
+        </div>
+        <time
+          class="session-timer"
+          id="sessionTimer"
+          aria-label="Session elapsed time"
+          >00:00:00</time
+        >
+      </header>
+
+      <!-- Panels -->
+      <div class="content-area">
+        <!-- Dashboard visualizations -->
+        <section class="panel" aria-label="Dashboard visualizations">
+          <div class="panel-header">
+            <span class="panel-title">Dashboard</span>
+            <select
+              class="panel-dropdown"
+              id="dashboardDropdown"
+              aria-label="Dashboard view selector"
+            >
+              <option value="">-- select --</option>
+            </select>
+          </div>
+          <div class="panel-body">
+            <div class="dashboard-box" id="dashboardBox">
+              <div class="empty-state">
+                <div class="empty-icon" aria-hidden="true">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                  </svg>
+                </div>
+                <p class="empty-text">
+                  Visualizations appear here once analysis is running.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Live logs -->
+        <section class="panel" aria-label="Live output logs">
+          <div class="panel-header">
+            <span class="panel-title">Live Output</span>
+            <div class="panel-actions">
+              <button
+                class="panel-btn"
+                id="copyLogsBtn"
+                type="button"
+                title="Copy logs"
+              >
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path
+                    d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                  />
+                </svg>
+                Copy
+              </button>
+              <button
+                class="panel-btn"
+                id="clearLogsBtn"
+                type="button"
+                title="Clear logs"
+              >
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                </svg>
+                Clear
+              </button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <textarea
+              class="output-area"
+              id="logOutput"
+              readonly
+              aria-label="Log output"
+              placeholder="Logs stream here once analysis starts..."
+            ></textarea>
+          </div>
+        </section>
+
+        <!-- Reports -->
+        <section class="panel" aria-label="Report viewer">
+          <div class="panel-header">
+            <span class="panel-title">Reports</span>
+            <select
+              class="panel-dropdown"
+              id="reportDropdown"
+              aria-label="Report selector"
+            >
+              <option value="">-- select --</option>
+            </select>
+          </div>
+          <div class="panel-body">
+            <textarea
+              class="output-area"
+              id="reportOutput"
+              aria-label="Report content"
+              placeholder="Reports appear here after analysis completes."
+            ></textarea>
+          </div>
+        </section>
+      </div>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <div class="stat-item">
+          LLM Calls: <span class="stat-val" id="statLLM">0</span>
+        </div>
+        <div class="stat-item">
+          Tool Calls: <span class="stat-val" id="statTool">0</span>
+        </div>
+        <div class="stat-item">
+          Tokens: <span class="stat-val" id="statTokens">0</span>
+        </div>
+        <div class="footer-spacer"></div>
+        <button class="footer-btn" id="openLogsBtn" type="button">
+          Open Logs
+        </button>
+      </footer>
+    </main>
+
+    <script src="static/js/app.js"></script>
+  </body>
+</html>

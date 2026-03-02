@@ -1,0 +1,13 @@
+{
+  "python.analysis.typeCheckingMode": "off",
+  "python.defaultInterpreterPath": "/home/akshay/Workspace/TradingAgents/.venv/bin/python3",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "editor.formatOnType": false,
+  "editor.formatOnPaste": false,
+  "editor.formatOnSave": true,
+  "python.languageServer": "Pylance",
+  "black-formatter.args": ["--line-length", "120"],
+  "python-envs.pythonProjects": []
+}
